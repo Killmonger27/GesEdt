@@ -10,9 +10,3 @@ export type SalleCreationPayload = Omit<Salle, "id">;
 
 // Type pour la mise à jour d'une salle
 export type SalleUpdatePayload = Partial<SalleCreationPayload>;
-
-// Type pour les erreurs de validation
-export interface ValidationError {
-  errors?: Record<string, string>;
-  message?: string;
-}

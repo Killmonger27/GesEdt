@@ -47,7 +47,7 @@ import {
   SelectValue,
 } from "../components/ui/select";
 import { toast } from "sonner";
-import { ApiError } from "../services/SalleService";
+import { ApiError } from "../lib/handleApiError";
 import { Salle } from "../interfaces/Salle";
 import {
   getSalles,
