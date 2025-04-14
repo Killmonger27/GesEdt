@@ -354,13 +354,13 @@ const Modules = () => {
     );
   }
 
-  // Statistiques des modules
-  const stats = {
-    total: modules.length,
-    nonDebutes: modules.filter((m) => m.statutMatiere === "NON_DEBUTE").length,
-    enCours: modules.filter((m) => m.statutMatiere === "EN_COURS").length,
-    termines: modules.filter((m) => m.statutMatiere === "TERMINE").length,
-  };
+  // // Statistiques des modules
+  // const stats = {
+  //   total: modules.length,
+  //   nonDebutes: modules.filter((m) => m.statutMatiere === "NON_DEBUTE").length,
+  //   enCours: modules.filter((m) => m.statutMatiere === "EN_COURS").length,
+  //   termines: modules.filter((m) => m.statutMatiere === "TERMINE").length,
+  // };
 
   return (
     <div className="container mx-auto p-6">
@@ -395,7 +395,7 @@ const Modules = () => {
         </div>
 
         {/* Statistiques en cartes */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        {/* <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="pb-2">
               <CardTitle className="text-lg text-gray-500">
@@ -441,7 +441,7 @@ const Modules = () => {
               </p>
             </CardContent>
           </Card>
-        </div>
+        </div> */}
 
         {/* Recherche et filtres */}
         <Card>
