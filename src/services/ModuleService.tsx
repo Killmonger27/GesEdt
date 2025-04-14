@@ -1,0 +1,141 @@
+import axios from "axios";
+import {
+  Module,
+  ModuleCreationPayload,
+  ModuleUpdatePayload,
+} from "../interfaces/Module";
+import { handleApiError } from "../lib/handleApiError";
+
+const API_URL = "http://localhost:8086/api/matiere";
+
+// Instance axios avec configuration
+const api = axios.create({
+  baseURL: API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+  timeout: 10000, // Timeout de 10 secondes
+});
+
+/**
+ * Récupère tous les modules
+ * @returns Liste des modules
+ */
+export const getModules = async (): Promise<Module[]> => {
+  try {
+    const response = await api.get("");
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Récupère un module par son ID
+ * @param id Identifiant du module
+ * @returns Détails du module
+ */
+export const getModuleById = async (id: string): Promise<Module> => {
+  try {
+    const response = await api.get(`/${id}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Crée un nouveau module
+ * @param module Données du module à créer
+ * @returns Module créé avec son ID
+ */
+export const createModule = async (
+  module: ModuleCreationPayload
+): Promise<Module> => {
+  try {
+    const response = await api.post("", module);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Met à jour un module existant
+ * @param id Identifiant du module
+ * @param module Données à mettre à jour
+ * @returns Module mis à jour
+ */
+export const updateModule = async (
+  id: string,
+  module: ModuleUpdatePayload
+): Promise<Module> => {
+  try {
+    const response = await api.put(`/${id}`, module);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Supprime un module
+ * @param id Identifiant du module à supprimer
+ */
+export const deleteModule = async (id: string): Promise<void> => {
+  try {
+    await api.delete(`/${id}`);
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Récupère tous les modules associés à une filière
+ * @param filiereId Identifiant de la filière
+ * @returns Liste des modules de la filière
+ */
+export const getModulesByFiliere = async (
+  filiereId: string
+): Promise<Module[]> => {
+  try {
+    const response = await api.get(`/filiere/${filiereId}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Récupère tous les modules assignés à un enseignant
+ * @param enseignantId Identifiant de l'enseignant
+ * @returns Liste des modules de l'enseignant
+ */
+export const getModulesByEnseignant = async (
+  enseignantId: string
+): Promise<Module[]> => {
+  try {
+    const response = await api.get(`/enseignant/${enseignantId}`);
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+/**
+ * Récupère les statistiques des modules par statut
+ * @returns Statistiques des modules
+ */
+export const getModuleStats = async (): Promise<{
+  total: number;
+  nonDebutes: number;
+  enCours: number;
+  termines: number;
+}> => {
+  try {
+    const response = await api.get("/stats");
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
