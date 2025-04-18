@@ -9,19 +9,6 @@ import {
 import axiosInstance from "../../lib/axiosInstance";
 import axios from "axios";
 
-// Configuration de base pour axios
-// const API_URL = "http://localhost:8086/api/auth";
-// axios.defaults.baseURL = API_URL;
-
-// // Configuration initiale de axios avec le token
-// const setAuthToken = (token: string | null) => {
-//   if (token) {
-//     axios.defaults.headers.common["Authorization"] = `Bearer ${token}`;
-//   } else {
-//     delete axios.defaults.headers.common["Authorization"];
-//   }
-// };
-
 // Thunks pour les actions asynchrones
 export const login = createAsyncThunk(
   "auth/login",
@@ -34,9 +21,6 @@ export const login = createAsyncThunk(
       // Stocker le token dans le localStorage si besoin
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("refreshToken", response.data.refreshToken);
-
-      // Définir le token pour les requêtes futures
-      //setAuthToken(response.data.token);
 
       return response.data;
     } catch (error: unknown) {
@@ -65,7 +49,6 @@ export const register = createAsyncThunk(
       localStorage.setItem("token", response.data.token);
       localStorage.setItem("refreshToken", response.data.refreshToken);
 
-      // Définir le token pour les requêtes futures
       return response.data;
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
@@ -90,9 +73,6 @@ export const refreshToken = createAsyncThunk(
       );
       localStorage.setItem("token", response.data.token);
 
-      // Définir le token pour les requêtes futures
-      //setAuthToken(response.data.token);
-
       return response.data;
     } catch (error: unknown) {
       if (axios.isAxiosError(error) && error.response) {
@@ -104,7 +84,7 @@ export const refreshToken = createAsyncThunk(
       // Si le rafraîchissement du token échoue, nous déconnectons l'utilisateur
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      //setAuthToken(null);
+
       return rejectWithValue("Session expirée. Veuillez vous reconnecter.");
     }
   }
@@ -117,7 +97,6 @@ export const logout = createAsyncThunk(
       const response = await axiosInstance.post("auth/logout", logoutData);
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      //setAuthToken(null);
 
       return response.data;
     } catch (error: unknown) {
@@ -129,7 +108,6 @@ export const logout = createAsyncThunk(
       // Même en cas d'erreur, nous supprimons les tokens locaux
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");
-      //setAuthToken(null);
 
       return rejectWithValue(
         (axios.isAxiosError(error) && error.response?.data?.message) ||
@@ -154,11 +132,6 @@ const initialState: AuthState = {
   isLoading: false,
   error: null,
 };
-
-// Récupérer le token au démarrage si disponible
-// if (initialState.token) {
-//   setAuthToken(initialState.token);
-// }
 
 // Slice Redux
 const authSlice = createSlice({
