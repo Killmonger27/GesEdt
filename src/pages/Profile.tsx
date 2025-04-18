@@ -35,80 +35,43 @@ import {
 import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Badge } from "../components/ui/badge";
+import { useAppDispatch } from "../hooks/redux";
+import axios from "axios";
+import {
+  UserData,
+  UserDetailsUpdate,
+  UserPasswordUpdate,
+  FormErrors,
+  PasswordForm,
+  PasswordErrors,
+} from "../interfaces/Profile";
+import {
+  getUserProfile,
+  updateUserProfile,
+  updatePassword,
+} from "../services/ProfileService";
 
-// Types pour TypeScript
-interface UserData {
-  id: string;
-  nom: string;
-  prenom: string;
-  sexe: "HOMME" | "FEMME";
-  telephone: string;
-  email: string;
-  password: string;
-  statutCompte: "ACTIF" | "INACTIF" | "SUSPENDU" | "BLOQUE";
-}
+// Création d'une instance axios avec intercepteur pour toujours utiliser le dernier token
+const API_URL = "http://localhost:8086/api";
+const apiInstance = axios.create({
+  baseURL: API_URL,
+});
 
-interface FormErrors {
-  nom?: string;
-  prenom?: string;
-  sexe?: string;
-  telephone?: string;
-  email?: string;
-}
-
-interface PasswordForm {
-  currentPassword: string;
-  newPassword: string;
-  confirmPassword: string;
-}
-
-interface PasswordErrors {
-  currentPassword?: string;
-  newPassword?: string;
-  confirmPassword?: string;
-}
-
-// Service fictif pour récupérer et mettre à jour les données utilisateur
-const getUserProfile = async (): Promise<UserData> => {
-  // Simulation d'appel API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: "usr-123456",
-        nom: "Dupont",
-        prenom: "Jean",
-        sexe: "HOMME",
-        telephone: "+212 12345678",
-        email: "jean.dupont@example.com",
-        password: "********",
-        statutCompte: "ACTIF",
-      });
-    }, 1000);
-  });
-};
-
-const updateUserProfile = async (userData: UserData): Promise<UserData> => {
-  // Simulation d'appel API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        ...userData,
-        password: "********",
-      });
-    }, 1500);
-  });
-};
-
-const updatePassword = async (passwordData: PasswordForm): Promise<boolean> => {
-  // Simulation d'appel API
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve(true);
-    }, 1500);
-  });
-};
+apiInstance.interceptors.request.use(
+  (config) => {
+    // Récupérer le token le plus récent à chaque requête
+    const token = localStorage.getItem("token");
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 const ProfilePage: React.FC = () => {
+  const dispatch = useAppDispatch();
+
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -117,7 +80,7 @@ const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState<UserData | null>(null);
   const [errors, setErrors] = useState<FormErrors>({});
   const [passwordForm, setPasswordForm] = useState<PasswordForm>({
-    currentPassword: "",
+    oldPassword: "",
     newPassword: "",
     confirmPassword: "",
   });
@@ -129,15 +92,22 @@ const ProfilePage: React.FC = () => {
         const data = await getUserProfile();
         setUserData(data);
         setFormData(data);
-      } catch (error) {
-        toast.error("Erreur lors du chargement des données");
+      } catch (error: unknown) {
+        if (axios.isAxiosError(error) && error.response) {
+          toast.error(
+            error.response.data?.message ||
+              "Erreur lors du chargement des données"
+          );
+        } else {
+          toast.error("Erreur inconnue lors du chargement des données");
+        }
       } finally {
         setIsLoading(false);
       }
     };
 
     loadUserData();
-  }, []);
+  }, [dispatch]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     const { name, value } = e.target;
@@ -224,8 +194,8 @@ const ProfilePage: React.FC = () => {
   const validatePasswordForm = (): boolean => {
     const newErrors: PasswordErrors = {};
 
-    if (!passwordForm.currentPassword) {
-      newErrors.currentPassword = "Veuillez saisir votre mot de passe actuel";
+    if (!passwordForm.oldPassword) {
+      newErrors.oldPassword = "Veuillez saisir votre mot de passe actuel";
     }
 
     if (!passwordForm.newPassword) {
@@ -257,14 +227,28 @@ const ProfilePage: React.FC = () => {
   const handleSubmit = async (): Promise<void> => {
     if (!validateForm() || !formData) return;
 
+    const userDetailsToUpdate: UserDetailsUpdate = {
+      nom: formData.nom,
+      prenom: formData.prenom,
+      telephone: formData.telephone,
+    };
+
     try {
       setIsSubmitting(true);
-      const updatedData = await updateUserProfile(formData);
+      const updatedData = await updateUserProfile(userDetailsToUpdate);
       setUserData(updatedData);
+      setFormData(updatedData);
       setIsEditing(false);
       toast.success("Profil mis à jour avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la mise à jour du profil");
+    } catch (error: unknown) {
+      if (axios.isAxiosError(error) && error.response) {
+        toast.error(
+          error.response.data?.message ||
+            "Erreur lors de la mise à jour du profil"
+        );
+      } else {
+        toast.error("Erreur inconnue lors de la mise à jour du profil");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -273,19 +257,42 @@ const ProfilePage: React.FC = () => {
   const handlePasswordSubmit = async (): Promise<void> => {
     if (!validatePasswordForm()) return;
 
+    const passwordUpdate: UserPasswordUpdate = {
+      oldPassword: passwordForm.oldPassword,
+      newPassword: passwordForm.newPassword,
+    };
+
     try {
       setIsSubmitting(true);
-      await updatePassword(passwordForm);
-      setPasswordDialogOpen(false);
-      setPasswordForm({
-        currentPassword: "",
-        newPassword: "",
-        confirmPassword: "",
-      });
-      setPasswordErrors({});
-      toast.success("Mot de passe modifié avec succès");
-    } catch (error) {
-      toast.error("Erreur lors de la modification du mot de passe");
+      const response = await updatePassword(passwordUpdate);
+      if (response.success) {
+        setPasswordDialogOpen(false);
+        setPasswordForm({
+          oldPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
+        setPasswordErrors({});
+        toast.success("Mot de passe modifié avec succès");
+      } else {
+        toast.error(
+          response.message || "Erreur lors de la modification du mot de passe"
+        );
+      }
+    } catch (error: unknown) {
+      // Si erreur 401, tenter de rafraîchir le token
+      if (axios.isAxiosError(error) && error.response?.status === 400) {
+        // Erreur de validation côté serveur (ancien mot de passe incorrect)
+        toast.error(
+          error.response.data?.message || "Mot de passe actuel incorrect"
+        );
+        setPasswordErrors({
+          ...passwordErrors,
+          oldPassword: "Mot de passe actuel incorrect",
+        });
+      } else {
+        toast.error("Erreur lors de la modification du mot de passe");
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -522,7 +529,8 @@ const ProfilePage: React.FC = () => {
                       value={formData.email}
                       onChange={handleInputChange}
                       placeholder="votre.email@example.com"
-                      disabled={!isEditing}
+                      // L'email ne devrait pas être modifiable ici
+                      disabled={true}
                       className={errors.email ? "border-destructive" : ""}
                     />
                     {errors.email && (
@@ -578,7 +586,8 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <h3 className="font-medium">Mot de passe</h3>
                     <p className="text-sm text-muted-foreground">
-                      Dernière modification il y a 3 mois
+                      Changer votre mot de passe régulièrement améliore la
+                      sécurité
                     </p>
                   </div>
                 </div>
@@ -608,28 +617,26 @@ const ProfilePage: React.FC = () => {
           <div className="grid gap-4 py-4">
             <div>
               <Label
-                htmlFor="currentPassword"
-                className={
-                  passwordErrors.currentPassword ? "text-destructive" : ""
-                }
+                htmlFor="oldPassword"
+                className={passwordErrors.oldPassword ? "text-destructive" : ""}
               >
                 Mot de passe actuel
               </Label>
               <Input
-                id="currentPassword"
-                name="currentPassword"
+                id="oldPassword"
+                name="oldPassword"
                 type="password"
-                value={passwordForm.currentPassword}
+                value={passwordForm.oldPassword}
                 onChange={handlePasswordChange}
                 className={
-                  passwordErrors.currentPassword
+                  passwordErrors.oldPassword
                     ? "border-destructive mt-1"
                     : "mt-1"
                 }
               />
-              {passwordErrors.currentPassword && (
+              {passwordErrors.oldPassword && (
                 <p className="text-xs text-destructive mt-1">
-                  {passwordErrors.currentPassword}
+                  {passwordErrors.oldPassword}
                 </p>
               )}
             </div>

@@ -13,16 +13,6 @@ export interface AuthState {
   error: string | null;
 }
 
-export interface User {
-  id?: number;
-  nom: string;
-  prenom: string;
-  type: string;
-  email: string;
-  statutCompte: string;
-  roles: string[];
-}
-
 export interface LoginRequest {
   email: string;
   password: string;
