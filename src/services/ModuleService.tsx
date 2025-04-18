@@ -1,21 +1,11 @@
-import axios from "axios";
 import {
   Module,
   ModuleCreationPayload,
   ModuleUpdatePayload,
 } from "../interfaces/Module";
 import { handleApiError } from "../lib/handleApiError";
-
-const API_URL = "http://localhost:8086/api/matiere";
-
-// Instance axios avec configuration
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000, // Timeout de 10 secondes
-});
+import axiosInstance from "../lib/axiosInstance";
+import axios from "axios";
 
 /**
  * Récupère tous les modules
@@ -23,7 +13,7 @@ const api = axios.create({
  */
 export const getModules = async (): Promise<Module[]> => {
   try {
-    const response = await api.get("");
+    const response = await axiosInstance.get("/matiere");
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -37,7 +27,7 @@ export const getModules = async (): Promise<Module[]> => {
  */
 export const getModuleById = async (id: string): Promise<Module> => {
   try {
-    const response = await api.get(`/${id}`);
+    const response = await axiosInstance.get(`matiere/${id}`);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -53,7 +43,7 @@ export const createModule = async (
   module: ModuleCreationPayload
 ): Promise<Module> => {
   try {
-    const response = await api.post("", module);
+    const response = await axiosInstance.post("/matiere", module);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -71,7 +61,7 @@ export const updateModule = async (
   module: ModuleUpdatePayload
 ): Promise<Module> => {
   try {
-    const response = await api.put(`/${id}`, module);
+    const response = await axios.put(`/matiere/${id}`, module);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -84,7 +74,7 @@ export const updateModule = async (
  */
 export const deleteModule = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/${id}`);
+    await axiosInstance.delete(`/matiere/${id}`);
   } catch (error) {
     throw handleApiError(error);
   }
@@ -99,7 +89,7 @@ export const getModulesByFiliere = async (
   filiereId: string
 ): Promise<Module[]> => {
   try {
-    const response = await api.get(`/filiere/${filiereId}`);
+    const response = await axiosInstance.get(`/matiere/filiere/${filiereId}`);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -115,7 +105,9 @@ export const getModulesByEnseignant = async (
   enseignantId: string
 ): Promise<Module[]> => {
   try {
-    const response = await api.get(`/enseignant/${enseignantId}`);
+    const response = await axiosInstance.get(
+      `/matiere/enseignant/${enseignantId}`
+    );
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -133,7 +125,7 @@ export const getModuleStats = async (): Promise<{
   termines: number;
 }> => {
   try {
-    const response = await api.get("/stats");
+    const response = await axiosInstance.get("/module/stats");
     return response.data;
   } catch (error) {
     throw handleApiError(error);

@@ -1,21 +1,10 @@
-import axios from "axios";
 import {
   Filiere,
   FiliereCreationPayload,
   FiliereUpdatePayload,
 } from "../interfaces/Filiere";
 import { handleApiError } from "../lib/handleApiError";
-
-const API_URL = "http://localhost:8086/api/filiere";
-
-// Instance axios avec configuration
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000, // Timeout de 10 secondes
-});
+import axiosInstance from "../lib/axiosInstance";
 
 /**
  * Récupère toutes les filières
@@ -23,7 +12,7 @@ const api = axios.create({
  */
 export const getFilieres = async (): Promise<Filiere[]> => {
   try {
-    const response = await api.get("");
+    const response = await axiosInstance.get("/filiere");
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -37,7 +26,7 @@ export const getFilieres = async (): Promise<Filiere[]> => {
  */
 export const getFiliereById = async (id: string): Promise<Filiere> => {
   try {
-    const response = await api.get(`/${id}`);
+    const response = await axiosInstance.get(`/filiere/${id}`);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -53,7 +42,7 @@ export const createFiliere = async (
   filiere: FiliereCreationPayload
 ): Promise<Filiere> => {
   try {
-    const response = await api.post("", filiere);
+    const response = await axiosInstance.post("/filiere", filiere);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -71,7 +60,7 @@ export const updateFiliere = async (
   filiere: FiliereUpdatePayload
 ): Promise<Filiere> => {
   try {
-    const response = await api.put(`/${id}`, filiere);
+    const response = await axiosInstance.put(`/${id}`, filiere);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -84,7 +73,7 @@ export const updateFiliere = async (
  */
 export const deleteFiliere = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/${id}`);
+    await axiosInstance.delete(`/filiere/${id}`);
   } catch (error) {
     throw handleApiError(error);
   }

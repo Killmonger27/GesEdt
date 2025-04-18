@@ -1,4 +1,4 @@
-import axios from "axios";
+import axiosInstance from "../lib/axiosInstance";
 import {
   Salle,
   SalleCreationPayload,
@@ -6,24 +6,13 @@ import {
 } from "../interfaces/Salle";
 import { handleApiError } from "../lib/handleApiError";
 
-const API_URL = "http://localhost:8086/api/salle";
-
-// Instance axios avec configuration
-const api = axios.create({
-  baseURL: API_URL,
-  headers: {
-    "Content-Type": "application/json",
-  },
-  timeout: 10000, // Timeout de 10 secondes
-});
-
 /**
  * Récupère toutes les salles
  * @returns Liste des salles
  */
 export const getSalles = async (): Promise<Salle[]> => {
   try {
-    const response = await api.get("");
+    const response = await axiosInstance.get("/salle");
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -37,7 +26,7 @@ export const getSalles = async (): Promise<Salle[]> => {
  */
 export const getSalleById = async (id: string): Promise<Salle> => {
   try {
-    const response = await api.get(`/${id}`);
+    const response = await axiosInstance.get(`/salle/${id}`);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -53,7 +42,7 @@ export const createSalle = async (
   salle: SalleCreationPayload
 ): Promise<Salle> => {
   try {
-    const response = await api.post("", salle);
+    const response = await axiosInstance.post("/salle", salle);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -71,7 +60,7 @@ export const updateSalle = async (
   salle: SalleUpdatePayload
 ): Promise<Salle> => {
   try {
-    const response = await api.put(`/${id}`, salle);
+    const response = await axiosInstance.put(`/salle/${id}`, salle);
     return response.data;
   } catch (error) {
     throw handleApiError(error);
@@ -84,7 +73,7 @@ export const updateSalle = async (
  */
 export const deleteSalle = async (id: string): Promise<void> => {
   try {
-    await api.delete(`/${id}`);
+    await axiosInstance.delete(`/salle/${id}`);
   } catch (error) {
     throw handleApiError(error);
   }

@@ -1,10 +1,17 @@
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-// import { useSelector } from "react-redux"; Utiliser Redux pour gérer l'état d'authentification
+import { useAppSelector } from "../hooks/redux";
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const isAuthenticated = true; //useSelector((state) => state.auth.isAuthenticated);
+  const isLoading = useAppSelector((state) => state.auth.isLoading);
+
+  const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
   const location = useLocation();
+
+  if (isLoading) {
+    // Afficher un spinner pendant le chargement
+    return <div>Chargement...</div>;
+  }
 
   if (!isAuthenticated) {
     // Redirige l'utilisateur non authentifié vers la page de connexion

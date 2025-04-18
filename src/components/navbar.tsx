@@ -4,11 +4,16 @@ import { useState, useRef, useEffect } from "react";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
+import { useAppDispatch } from "../hooks/redux";
+import { logout } from "../redux/auth/authSlice";
 
 const Navbar = () => {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  const refreshtoken = localStorage.getItem("refreshToken");
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -24,10 +29,16 @@ const Navbar = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleLogout = () => {
-    // Handle logout logic here (e.g., clear tokens, redirect to login page)
-    console.log("Logged out");
-    // Redirect to login page or perform any other actions as needed
+  const handleLogout = (e: React.MouseEvent<HTMLButtonElement>) => {
+    e.preventDefault();
+    // logique de déconnexion
+
+    dispatch(
+      logout({
+        refreshToken: refreshtoken || "",
+      })
+    );
+
     navigate("/");
   };
 

@@ -1,39 +1,52 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Eye, EyeOff, LogIn, ArrowRight, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
+import { login, clearError } from "../redux/auth/authSlice";
+import { LoginRequest } from "../interfaces/Authentification";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  const Navigate = useNavigate();
 
-  interface LoginFormValues {
-    email: string;
-    password: string;
-    rememberMe: boolean;
-  }
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  // Récupérer les états depuis le store Redux
+  const { isLoading, isAuthenticated, error } = useAppSelector(
+    (state) => state.auth
+  );
+
+  // Rediriger si l'utilisateur est déjà authentifié
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/dashboard");
+    }
+  }, [isAuthenticated, navigate]);
+
+  // Effacer les erreurs lorsque les champs sont modifiés
+  useEffect(() => {
+    if (error) {
+      dispatch(clearError());
+    }
+  }, [email, password, dispatch, error]);
 
   const handleLogin = async (
     e: React.FormEvent<HTMLFormElement>
   ): Promise<void> => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Simuler une requête d'authentification
-    try {
-      await new Promise<void>((resolve) => setTimeout(resolve, 1500));
-      const loginData: LoginFormValues = { email, password, rememberMe };
-      console.log("Connexion avec:", loginData);
-      // Redirection vers le dashboard après connexion
-      Navigate("/dashboard");
-    } catch (error) {
-      console.error("Erreur de connexion:", error);
-    } finally {
-      setIsLoading(false);
-    }
+    // Envoyer les données de connexion au back-end
+    const loginData: LoginRequest = {
+      email: email,
+      password: password,
+    };
+
+    dispatch(login(loginData));
+
+    console.log("Connexion avec:", loginData);
   };
 
   return (
@@ -249,7 +262,10 @@ const Login = () => {
 
         <p className="mt-6 text-center text-sm text-muted-foreground">
           Pas encore de compte?{" "}
-          <a href="#" className="font-medium text-primary hover:underline">
+          <a
+            href="/register"
+            className="font-medium text-primary hover:underline"
+          >
             Créer un compte <ArrowRight size={14} className="inline ml-1" />
           </a>
         </p>
