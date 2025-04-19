@@ -55,7 +55,7 @@ import {
   createModule,
   updateModule,
   deleteModule,
-} from "../services/ModuleService.tsx";
+} from "../services/ModuleService";
 import {
   Card,
   CardContent,

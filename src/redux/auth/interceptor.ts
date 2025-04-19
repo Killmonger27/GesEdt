@@ -29,6 +29,8 @@ export const setupAuthInterceptor = () => {
           } catch (refreshError) {
             // Si le rafraîchissement échoue, déconnecter l'utilisateur
             await store.dispatch(logout({ refreshToken: refreshTokenValue }));
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("token");
             return Promise.reject(refreshError);
           }
         } else {
