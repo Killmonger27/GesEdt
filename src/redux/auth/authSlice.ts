@@ -94,6 +94,9 @@ export const logout = createAsyncThunk(
   "auth/logout",
   async (logoutData: LogoutRequest, { rejectWithValue }) => {
     try {
+      axiosInstance.defaults.headers.common.Authorization = `Bearer ${localStorage.getItem(
+        "refreshToken"
+      )}`;
       const response = await axiosInstance.post("auth/logout", logoutData);
       localStorage.removeItem("token");
       localStorage.removeItem("refreshToken");

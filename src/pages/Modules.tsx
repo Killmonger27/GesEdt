@@ -55,6 +55,7 @@ import {
   createModule,
   updateModule,
   deleteModule,
+  getEnseignants,
 } from "../services/ModuleService";
 import {
   Card,
@@ -69,6 +70,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "../components/ui/tabs";
+import { UserData } from "../interfaces/Profile";
+import { getFilieres } from "../services/FiliereService";
+import { Filiere } from "../interfaces/Filiere";
 
 const Modules = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -87,21 +91,58 @@ const Modules = () => {
   const [formFieldErrors, setFormFieldErrors] = useState<
     Record<string, string>
   >({});
+  const [enseignants, setEnseignants] = useState<UserData[]>([]);
+  const [filieres, setFilieres] = useState<Filiere[]>([]);
 
-  // Données fictives pour les enseignants et filières
-  const enseignants = [
-    { id: "ens-001", nom: "Dr. Martin Dubois" },
-    { id: "ens-002", nom: "Prof. Sophie Leclerc" },
-    { id: "ens-003", nom: "Dr. Ahmed Benali" },
-    { id: "ens-004", nom: "Prof. Emma Johnson" },
-  ];
+  // Chargement des enseignants depuis le backend
+  const fetchEnseignants = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getEnseignants();
+      setEnseignants(data);
+      setError(null);
+    } catch (err) {
+      setError("Erreur lors du chargement des enseignants");
+      toast.error(err instanceof Error ? err.message : "Erreur inconnue", {
+        duration: 5000,
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+        },
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
-  const filieres = [
-    { id: "fil-001", nom: "Informatique" },
-    { id: "fil-002", nom: "Réseaux et Télécommunications" },
-    { id: "fil-003", nom: "Génie Civil" },
-    { id: "fil-004", nom: "Commerce International" },
-  ];
+  //Chargement des filières depuis le backend
+  const fetchFilieres = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getFilieres();
+      setFilieres(data);
+      setError(null);
+    } catch (err) {
+      setError("Erreur lors du chargement des filières");
+      toast.error(err instanceof Error ? err.message : "Erreur inconnue", {
+        duration: 5000,
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+        },
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  // Effet initial
+  useEffect(() => {
+    fetchEnseignants();
+    fetchFilieres();
+  }, []);
 
   // Fonction pour obtenir le nom de l'enseignant à partir de son ID
   const getEnseignantNom = (id: string) => {
@@ -112,7 +153,7 @@ const Modules = () => {
   // Fonction pour obtenir le nom de la filière à partir de son ID
   const getFiliereNom = (id: string) => {
     const filiere = filieres.find((f) => f.id === id);
-    return filiere ? filiere.nom : "Non assignée";
+    return filiere ? filiere.nomFiliere : "Non assignée";
   };
 
   // Chargement des modules depuis le backend
@@ -926,7 +967,7 @@ const Modules = () => {
                   <SelectContent>
                     {filieres.map((filiere) => (
                       <SelectItem key={filiere.id} value={filiere.id}>
-                        {filiere.nom}
+                        {filiere.nomFiliere}
                       </SelectItem>
                     ))}
                   </SelectContent>

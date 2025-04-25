@@ -60,7 +60,7 @@ export const updateFiliere = async (
   filiere: FiliereUpdatePayload
 ): Promise<Filiere> => {
   try {
-    const response = await axiosInstance.put(`/${id}`, filiere);
+    const response = await axiosInstance.put(`/filiere/${id}`, filiere);
     return response.data;
   } catch (error) {
     throw handleApiError(error);

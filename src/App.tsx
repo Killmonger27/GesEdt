@@ -11,6 +11,8 @@ import Users from "./pages/Users";
 import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/protectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
+import Edt from "./pages/Edt";
+import Indisponibilites from "./pages/Indisponibilites";
 
 export default function App() {
   return (
@@ -66,6 +68,23 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Users />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/edt"
+              element={
+                <ProtectedRoute>
+                  <Edt />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/indisponibilites"
+              element={
+                <ProtectedRoute>
+                  <Indisponibilites />
                 </ProtectedRoute>
               }
             />

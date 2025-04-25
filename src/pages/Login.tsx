@@ -109,6 +109,7 @@ const Login = () => {
 
         {/* Carte de formulaire */}
         <div className="bg-card border border-border shadow-lg rounded-lg p-6">
+          <div> {error && <p className="text-red-500 text-sm">{error}</p>}</div>
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label

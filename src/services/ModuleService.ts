@@ -6,6 +6,7 @@ import {
 import { handleApiError } from "../lib/handleApiError";
 import axiosInstance from "../lib/axiosInstance";
 import axios from "axios";
+import { UserData } from "../interfaces/Profile";
 
 /**
  * Récupère tous les modules
@@ -126,6 +127,18 @@ export const getModuleStats = async (): Promise<{
 }> => {
   try {
     const response = await axiosInstance.get("/module/stats");
+    return response.data;
+  } catch (error) {
+    throw handleApiError(error);
+  }
+};
+
+export const getEnseignants = async (): Promise<UserData[]> => {
+  try {
+    const response = await axiosInstance.get("/admin/users");
+    response.data = response.data.filter(
+      (user: UserData) => user.role === "ENSEIGNANT"
+    );
     return response.data;
   } catch (error) {
     throw handleApiError(error);

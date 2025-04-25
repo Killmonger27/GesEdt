@@ -27,6 +27,14 @@ export interface UserData {
   accountNonExpired: boolean;
   credentialsNonExpired: boolean;
   accountNonLocked: boolean;
+  typeEnseignant?: string;
+  grade?: string;
+  specialite?: string;
+  ine?: string;
+  titreEtudiant?: string;
+  filiereID?: string;
+  typeParent?: string;
+  lieuResidence?: string;
 }
 
 export interface UserDetailsUpdate {

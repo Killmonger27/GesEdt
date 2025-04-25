@@ -26,6 +26,11 @@ export function AppSidebar() {
       icon: LayoutDashboard,
     },
     {
+      title: "Emploi du temps",
+      url: "/edt",
+      icon: Album,
+    },
+    {
       title: "Filieres",
       url: "/filieres",
       icon: GraduationCap,
@@ -38,6 +43,11 @@ export function AppSidebar() {
     {
       title: "Modules",
       url: "/modules",
+      icon: Album,
+    },
+    {
+      title: "Indisponibilités",
+      url: "/indisponibilites",
       icon: Album,
     },
     {
