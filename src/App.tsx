@@ -13,6 +13,7 @@ import ProtectedRoute from "./components/protectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import Edt from "./pages/Edt";
 import Indisponibilites from "./pages/Indisponibilites";
+import EditEdt from "./pages/EditEdt";
 
 export default function App() {
   return (
@@ -76,6 +77,15 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <Edt />
+                </ProtectedRoute>
+              }
+            />
+
+            <Route
+              path="/editEdt"
+              element={
+                <ProtectedRoute>
+                  <EditEdt />
                 </ProtectedRoute>
               }
             />

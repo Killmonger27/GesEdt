@@ -5,7 +5,6 @@ import {
 } from "../interfaces/Module";
 import { handleApiError } from "../lib/handleApiError";
 import axiosInstance from "../lib/axiosInstance";
-import axios from "axios";
 import { UserData } from "../interfaces/Profile";
 
 /**
@@ -62,7 +61,7 @@ export const updateModule = async (
   module: ModuleUpdatePayload
 ): Promise<Module> => {
   try {
-    const response = await axios.put(`/matiere/${id}`, module);
+    const response = await axiosInstance.put(`/matiere/${id}`, module);
     return response.data;
   } catch (error) {
     throw handleApiError(error);

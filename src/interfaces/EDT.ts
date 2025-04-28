@@ -11,9 +11,19 @@ export interface Cours {
 
 export interface Edt {
   id: string;
-  datePublication: Date;
-  dateDebut: Date;
-  dateFin: Date;
-  statuEdt: "BROUILLON" | "CLOS" | "PUBLIE";
+  datePublication?: string;
+  dateDebut: string;
+  dateFin: string;
+  statutEdt: "BROUILLON" | "CLOS" | "PUBLIE";
   idFiliere: string;
+}
+
+export interface Devoir {
+  id: string;
+  date: Date;
+  creneau: "MATIN" | "SOIR";
+  statutDevoir: "FAIT" | "NON_FAIT" | "ANNULE";
+  idSalle: string;
+  idMatiere: string;
+  idEmploiDuTemps: string;
 }
