@@ -1,7 +1,7 @@
 export interface Cours {
   id: string;
   date: Date;
-  creneau: "MATIN" | "SOIR";
+  crenau: "MATIN" | "SOIR";
   statutCours: "PLANIFIE" | "FAIT" | "NON_FAIT" | "ANNULE";
   disponibiliteProf: "DISPONIBLE" | "INDISPONIBLE";
   idSalle: string;
@@ -21,7 +21,8 @@ export interface Edt {
 export interface Devoir {
   id: string;
   date: Date;
-  creneau: "MATIN" | "SOIR";
+  crenau: "MATIN" | "SOIR";
+  duree: number;
   statutDevoir: "FAIT" | "NON_FAIT" | "ANNULE";
   idSalle: string;
   idMatiere: string;

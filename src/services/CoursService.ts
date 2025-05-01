@@ -4,9 +4,14 @@ import { handleApiError } from "../lib/handleApiError";
 import { Cours } from "../interfaces/EDT";
 
 // Fonction pour récupérer les cours d'un EDT
-export const getCoursByEdt = async (edtId: string): Promise<Cours[]> => {
+export const getCoursByEdt = async (
+  edtId: string,
+  filiereId: string
+): Promise<Cours[]> => {
   try {
-    const response = await axiosInstance.get<Cours[]>(`/cours/${edtId}`);
+    const response = await axiosInstance.get<Cours[]>(
+      `/cours/${edtId}/${filiereId}`
+    );
     return response.data;
   } catch (error) {
     throw handleApiError(error);

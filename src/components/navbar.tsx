@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
-import { useAppDispatch } from "../hooks/redux";
+import { useAppDispatch, useAppSelector } from "../hooks/redux";
 import { logout } from "../redux/auth/authSlice";
 
 const Navbar = () => {
@@ -12,6 +12,8 @@ const Navbar = () => {
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+
+  const { nom, prenom } = useAppSelector((state) => state.auth);
 
   const refreshtoken = localStorage.getItem("refreshToken");
 
@@ -73,7 +75,7 @@ const Navbar = () => {
             <div className="h-8 w-8 rounded-full bg-blue-50 flex items-center justify-center text-primary border border-blue-100">
               <User size={20} />
             </div>
-            <span className="hidden md:block">Admin</span>
+            <span className="hidden md:block">{nom + ` ` + prenom}</span>
             <ChevronDown
               size={20}
               className={`text-gray-500 transition-transform ${

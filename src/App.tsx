@@ -13,7 +13,7 @@ import ProtectedRoute from "./components/protectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import Edt from "./pages/Edt";
 import Indisponibilites from "./pages/Indisponibilites";
-import EditEdt from "./pages/EditEdt";
+import EditEdt from "./pages/edit";
 
 export default function App() {
   return (
