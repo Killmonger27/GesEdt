@@ -34,8 +34,8 @@ export interface RegisterRequest {
   // Informations etudiant
   ine?: string;
   titreEtudiant?: "ETUDIANT_SIMPLE" | "ETUDIANT_DELEGUE";
-  parentID?: string;
-  filiereID?: string;
+  parentId?: string;
+  filiereId?: string;
 
   // Informations enseignant
   matricule?: string;

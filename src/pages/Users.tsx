@@ -2,8 +2,6 @@ import { useState, useEffect } from "react";
 import {
   Plus,
   Search,
-  Edit,
-  Trash2,
   Loader2,
   Filter,
   AlertCircle,
@@ -33,16 +31,6 @@ import {
   DialogTitle,
   DialogFooter,
 } from "../components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../components/ui/alert-dialog";
 import { Label } from "../components/ui/label";
 import {
   Select,
@@ -57,14 +45,10 @@ import { UserData } from "../interfaces/Profile";
 import { RegisterRequest } from "../interfaces/Authentification";
 import {
   getUtilisateurs,
-  updateUtilisateur,
-  deleteUtilisateur,
   createUtilisateur,
   activateUtilisateur,
-  desActivateUtilisateur,
   blockUtilisateur,
-  unblockUtilisateur,
-  resetPassword,
+  promoteStudent,
 } from "../services/UsersService";
 import {
   Card,
@@ -87,25 +71,16 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { Filiere } from "../interfaces/Filiere";
+import { getFilieres } from "../services/FiliereService";
 
 const Users = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterRole, setFilterRole] = useState<string>("all");
   const [filterStatut, setFilterStatut] = useState<string>("all");
   const [utilisateurs, setUtilisateurs] = useState<UserData[]>([]);
-  const [currentUtilisateur, setCurrentUtilisateur] = useState<UserData | null>(
-    null
-  );
+
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [isResetPasswordDialogOpen, setIsResetPasswordDialogOpen] =
-    useState(false);
-  const [utilisateurToDelete, setUtilisateurToDelete] = useState<string | null>(
-    null
-  );
-  const [utilisateurToResetPassword, setUtilisateurToResetPassword] = useState<
-    string | null
-  >(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -118,6 +93,7 @@ const Users = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showAdditionalFields, setShowAdditionalFields] = useState(true);
   const [role, setRole] = useState<string>("ADMIN");
+  const [filieres, setFilieres] = useState<Filiere[]>([]);
 
   // Chargement des utilisateurs depuis le backend
   const fetchUtilisateurs = async () => {
@@ -140,10 +116,31 @@ const Users = () => {
       setIsRefreshing(false);
     }
   };
+  const fetchFilieres = async () => {
+    try {
+      setIsLoading(true);
+      const data = await getFilieres();
+      setFilieres(data);
+      setError(null);
+    } catch (err) {
+      setError("Erreur lors du chargement des filières");
+      toast.error(err instanceof Error ? err.message : "Erreur inconnue", {
+        duration: 5000,
+        style: {
+          backgroundColor: "#fee2e2",
+          color: "#991b1b",
+        },
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
 
   // Effet initial
   useEffect(() => {
     fetchUtilisateurs();
+    fetchFilieres();
   }, []);
 
   // Fonction de rafraîchissement
@@ -218,10 +215,7 @@ const Users = () => {
         utilisateurData.specialite = formData.get("specialite") as string;
       } else if (role === "ETUDIANT") {
         utilisateurData.ine = formData.get("ine") as string;
-        utilisateurData.titreEtudiant = formData.get(
-          "titreEtudiant"
-        ) as RegisterRequest["titreEtudiant"];
-        utilisateurData.filiereID = formData.get("filiereID") as string;
+        utilisateurData.filiereId = formData.get("filiereID") as string;
       } else if (role === "PARENT") {
         utilisateurData.typeParent = formData.get(
           "typeParent"
@@ -229,34 +223,19 @@ const Users = () => {
         utilisateurData.lieuResidence = formData.get("lieuResidence") as string;
       }
 
-      if (currentUtilisateur) {
-        // Modification
-        await updateUtilisateur(currentUtilisateur.id, utilisateurData);
-        // Rafraîchir la liste pour obtenir les données à jour
-        await fetchUtilisateurs();
-        toast.success("Utilisateur mis à jour avec succès", {
-          duration: 3000,
-          style: {
-            backgroundColor: "#dcfce7",
-            color: "#166534",
-          },
-        });
-      } else {
-        // Ajout
-        await createUtilisateur(utilisateurData);
-        // Rafraîchir la liste pour obtenir les données à jour
-        await fetchUtilisateurs();
-        toast.success("Utilisateur ajouté avec succès", {
-          duration: 3000,
-          style: {
-            backgroundColor: "#dcfce7",
-            color: "#166534",
-          },
-        });
-      }
+      // Ajout
+      await createUtilisateur(utilisateurData);
+      // Rafraîchir la liste pour obtenir les données à jour
+      await fetchUtilisateurs();
+      toast.success("Utilisateur ajouté avec succès", {
+        duration: 3000,
+        style: {
+          backgroundColor: "#dcfce7",
+          color: "#166534",
+        },
+      });
 
       setIsDialogOpen(false);
-      setCurrentUtilisateur(null);
     } catch (err) {
       if (err instanceof ApiError && err.fieldErrors) {
         setFormFieldErrors(err.fieldErrors);
@@ -281,110 +260,43 @@ const Users = () => {
     }
   };
 
-  // Préparation de la suppression
-  const prepareDelete = (id: string) => {
-    setUtilisateurToDelete(id);
-    setIsDeleteDialogOpen(true);
-  };
-
-  // Préparation de la réinitialisation du mot de passe
-  const prepareResetPassword = (id: string) => {
-    setUtilisateurToResetPassword(id);
-    setIsResetPasswordDialogOpen(true);
-  };
-
-  // Confirmation de la suppression
-  const confirmDelete = async () => {
-    if (!utilisateurToDelete) return;
-
-    try {
-      await deleteUtilisateur(utilisateurToDelete);
-      setUtilisateurs(
-        utilisateurs.filter(
-          (utilisateur) => utilisateur.id !== utilisateurToDelete
-        )
-      );
-      toast.success("Utilisateur supprimé avec succès", {
-        duration: 3000,
-        style: {
-          backgroundColor: "#dcfce7",
-          color: "#166534",
-        },
-      });
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Impossible de supprimer l'utilisateur",
-        {
-          duration: 5000,
-          style: {
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-          },
-        }
-      );
-    } finally {
-      setIsDeleteDialogOpen(false);
-      setUtilisateurToDelete(null);
-    }
-  };
-
-  // Confirmation de la réinitialisation du mot de passe
-  const confirmResetPassword = async () => {
-    if (!utilisateurToResetPassword) return;
-
-    try {
-      await resetPassword(utilisateurToResetPassword);
-      toast.success("Mot de passe réinitialisé avec succès", {
-        duration: 3000,
-        style: {
-          backgroundColor: "#dcfce7",
-          color: "#166534",
-        },
-      });
-    } catch (err) {
-      toast.error(
-        err instanceof Error
-          ? err.message
-          : "Impossible de réinitialiser le mot de passe",
-        {
-          duration: 5000,
-          style: {
-            backgroundColor: "#fee2e2",
-            color: "#991b1b",
-          },
-        }
-      );
-    } finally {
-      setIsResetPasswordDialogOpen(false);
-      setUtilisateurToResetPassword(null);
-    }
-  };
-
-  // Gestion de l'activation/désactivation/blocage des comptes
+  // Gestion de l'activation/blocage des comptes
   const handleStatusChange = async (
     userId: string,
-    action: "activate" | "deactivate" | "block" | "unblock"
+    action: "activate" | "block" | "promouvoir"
   ) => {
     setIsProcessing(userId);
     try {
       switch (action) {
         case "activate":
           await activateUtilisateur(userId);
-          toast.success("Compte activé avec succès");
-          break;
-        case "deactivate":
-          desActivateUtilisateur(userId);
-          toast.success("Compte désactivé avec succès");
+          toast.success("Compte activé avec succès", {
+            duration: 3000,
+            style: {
+              backgroundColor: "#dcfce7",
+              color: "#166534",
+            },
+          });
           break;
         case "block":
           await blockUtilisateur(userId);
-          toast.success("Compte bloqué avec succès");
+          toast.success("Compte bloqué avec succès", {
+            duration: 3000,
+            style: {
+              backgroundColor: "#dcfce7",
+              color: "#166534",
+            },
+          });
           break;
-        case "unblock":
-          await unblockUtilisateur(userId);
-          toast.success("Compte débloqué avec succès");
+        case "promouvoir":
+          await promoteStudent(userId);
+          toast.success("Etudiant promu avec succès", {
+            duration: 3000,
+            style: {
+              backgroundColor: "#dcfce7",
+              color: "#166534",
+            },
+          });
           break;
       }
 
@@ -409,8 +321,7 @@ const Users = () => {
   };
 
   // Ouverture du formulaire de création/modification
-  const openUtilisateurForm = (utilisateur: UserData | null = null) => {
-    setCurrentUtilisateur(utilisateur);
+  const openUtilisateurForm = () => {
     setFormError(null);
     setFormFieldErrors({});
     setIsDialogOpen(true);
@@ -476,11 +387,7 @@ const Users = () => {
         return (
           <div className="space-y-2">
             <Label htmlFor="typeAdmin">Type Admin</Label>
-            <Select
-              name="typeAdmin"
-              defaultValue={currentUtilisateur?.typeAdmin || "COORDONNATEUR"}
-              required
-            >
+            <Select name="typeAdmin" required>
               <SelectTrigger>
                 <SelectValue placeholder="Sélectionner le type" />
               </SelectTrigger>
@@ -496,18 +403,11 @@ const Users = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="matricule">Matricule</Label>
-              <Input
-                id="matricule"
-                name="matricule"
-                defaultValue={currentUtilisateur?.matricule || ""}
-              />
+              <Input id="matricule" name="matricule" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="typeEnseignant">Type Enseignant</Label>
-              <Select
-                name="typeEnseignant"
-                defaultValue={currentUtilisateur?.typeEnseignant || "PERMANENT"}
-              >
+              <Select name="typeEnseignant">
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner le type" />
                 </SelectTrigger>
@@ -519,19 +419,11 @@ const Users = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="grade">Grade</Label>
-              <Input
-                id="grade"
-                name="grade"
-                defaultValue={currentUtilisateur?.grade || ""}
-              />
+              <Input id="grade" name="grade" />
             </div>
             <div className="space-y-2">
               <Label htmlFor="specialite">Spécialité</Label>
-              <Input
-                id="specialite"
-                name="specialite"
-                defaultValue={currentUtilisateur?.specialite || ""}
-              />
+              <Input id="specialite" name="specialite" />
             </div>
           </div>
         );
@@ -540,38 +432,22 @@ const Users = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="ine">INE</Label>
-              <Input
-                id="ine"
-                name="ine"
-                defaultValue={currentUtilisateur?.ine || ""}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="titreEtudiant">Titre</Label>
-              <Select
-                name="titreEtudiant"
-                defaultValue={
-                  currentUtilisateur?.titreEtudiant || "ETUDIANT_SIMPLE"
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner le titre" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ETUDIANT_SIMPLE">
-                    Étudiant simple
-                  </SelectItem>
-                  <SelectItem value="ETUDIANT_DELEGUE">Délégué</SelectItem>
-                </SelectContent>
-              </Select>
+              <Input id="ine" name="ine" />
             </div>
             <div className="space-y-2 col-span-2">
-              <Label htmlFor="filiereID">Filière ID</Label>
-              <Input
-                id="filiereID"
-                name="filiereID"
-                defaultValue={currentUtilisateur?.filiereID || ""}
-              />
+              <Label htmlFor="filiereID">Filière </Label>
+              <Select name="filiereID" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner la filière" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filieres.map((filiere) => (
+                    <SelectItem key={filiere.id} value={filiere.id}>
+                      {filiere.nomFiliere} {filiere.niveau}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         );
@@ -580,10 +456,7 @@ const Users = () => {
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="typeParent">Type Parent</Label>
-              <Select
-                name="typeParent"
-                defaultValue={currentUtilisateur?.typeParent || "PERE"}
-              >
+              <Select name="typeParent">
                 <SelectTrigger>
                   <SelectValue placeholder="Sélectionner le type" />
                 </SelectTrigger>
@@ -596,11 +469,7 @@ const Users = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="lieuResidence">Lieu de résidence</Label>
-              <Input
-                id="lieuResidence"
-                name="lieuResidence"
-                defaultValue={currentUtilisateur?.lieuResidence || ""}
-              />
+              <Input id="lieuResidence" name="lieuResidence" />
             </div>
           </div>
         );
@@ -681,8 +550,6 @@ const Users = () => {
                     <SelectItem value="all">Tous les statuts</SelectItem>
                     <SelectItem value="ACTIF">Actif</SelectItem>
                     <SelectItem value="INACTIF">Inactif</SelectItem>
-                    <SelectItem value="BLOQUE">Bloqué</SelectItem>
-                    <SelectItem value="SUSPENDU">Suspendu</SelectItem>
                     <SelectItem value="EN_ATTENTE">En attente</SelectItem>
                   </SelectContent>
                 </Select>
@@ -783,12 +650,12 @@ const Users = () => {
                                       </DropdownMenuItem>
                                     )}
 
-                                    {utilisateur.statutCompte === "ACTIF" && (
+                                    {utilisateur.role === "ETUDIANT" && (
                                       <DropdownMenuItem
                                         onClick={() =>
                                           handleStatusChange(
                                             utilisateur.id,
-                                            "deactivate"
+                                            "promouvoir"
                                           )
                                         }
                                         disabled={
@@ -801,7 +668,7 @@ const Users = () => {
                                         ) : (
                                           <Lock className="h-4 w-4 mr-2" />
                                         )}
-                                        Désactiver
+                                        Promouvoir délegué
                                       </DropdownMenuItem>
                                     )}
 
@@ -826,58 +693,8 @@ const Users = () => {
                                         Bloquer
                                       </DropdownMenuItem>
                                     )}
-
-                                    {utilisateur.statutCompte === "BLOQUE" && (
-                                      <DropdownMenuItem
-                                        onClick={() =>
-                                          handleStatusChange(
-                                            utilisateur.id,
-                                            "unblock"
-                                          )
-                                        }
-                                        disabled={
-                                          isProcessing === utilisateur.id
-                                        }
-                                        className="text-blue-600 focus:text-blue-600"
-                                      >
-                                        {isProcessing === utilisateur.id ? (
-                                          <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                                        ) : (
-                                          <Shield className="h-4 w-4 mr-2" />
-                                        )}
-                                        Débloquer
-                                      </DropdownMenuItem>
-                                    )}
-
-                                    <DropdownMenuItem
-                                      onClick={() =>
-                                        prepareResetPassword(utilisateur.id)
-                                      }
-                                      className="text-amber-600 focus:text-amber-600"
-                                    >
-                                      <RotateCw className="h-4 w-4 mr-2" />
-                                      Réinitialiser le mot de passe
-                                    </DropdownMenuItem>
                                   </DropdownMenuContent>
                                 </DropdownMenu>
-
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() =>
-                                    openUtilisateurForm(utilisateur)
-                                  }
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => prepareDelete(utilisateur.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -955,11 +772,7 @@ const Users = () => {
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {currentUtilisateur
-                ? "Modifier l'utilisateur"
-                : "Ajouter un utilisateur"}
-            </DialogTitle>
+            <DialogTitle>Ajouter un utilisateur</DialogTitle>
             {formError && (
               <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mt-2 text-sm">
                 {formError}
@@ -971,12 +784,7 @@ const Users = () => {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="nom">Nom</Label>
-                <Input
-                  id="nom"
-                  name="nom"
-                  required
-                  defaultValue={currentUtilisateur?.nom || ""}
-                />
+                <Input id="nom" name="nom" required />
                 {formFieldErrors.nom && (
                   <p className="text-red-500 text-xs">{formFieldErrors.nom}</p>
                 )}
@@ -984,12 +792,7 @@ const Users = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="prenom">Prénom</Label>
-                <Input
-                  id="prenom"
-                  name="prenom"
-                  required
-                  defaultValue={currentUtilisateur?.prenom || ""}
-                />
+                <Input id="prenom" name="prenom" required />
                 {formFieldErrors.prenom && (
                   <p className="text-red-500 text-xs">
                     {formFieldErrors.prenom}
@@ -999,11 +802,7 @@ const Users = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="sexe">Sexe</Label>
-                <Select
-                  name="sexe"
-                  defaultValue={currentUtilisateur?.sexe || "M"}
-                  required
-                >
+                <Select name="sexe" required>
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner le sexe" />
                   </SelectTrigger>
@@ -1019,12 +818,7 @@ const Users = () => {
 
               <div className="space-y-2">
                 <Label htmlFor="telephone">Téléphone</Label>
-                <Input
-                  id="telephone"
-                  name="telephone"
-                  required
-                  defaultValue={currentUtilisateur?.telephone || ""}
-                />
+                <Input id="telephone" name="telephone" required />
                 {formFieldErrors.telephone && (
                   <p className="text-red-500 text-xs">
                     {formFieldErrors.telephone}
@@ -1035,55 +829,46 @@ const Users = () => {
 
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                required
-                defaultValue={currentUtilisateur?.email || ""}
-              />
+              <Input id="email" name="email" type="email" required />
               {formFieldErrors.email && (
                 <p className="text-red-500 text-xs">{formFieldErrors.email}</p>
               )}
             </div>
 
-            {!currentUtilisateur && (
-              <div className="space-y-2">
-                <div className="flex justify-between items-center">
-                  <Label htmlFor="password">Mot de passe</Label>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 px-2"
-                    onClick={() => setShowPassword(!showPassword)}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
-                <Input
-                  id="password"
-                  name="password"
-                  type={showPassword ? "text" : "password"}
-                  required={!currentUtilisateur}
-                />
-                {formFieldErrors.password && (
-                  <p className="text-red-500 text-xs">
-                    {formFieldErrors.password}
-                  </p>
-                )}
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 px-2"
+                  onClick={() => setShowPassword(!showPassword)}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
+                  )}
+                </Button>
               </div>
-            )}
+              <Input
+                id="password"
+                name="password"
+                type={showPassword ? "text" : "password"}
+                required={true}
+              />
+              {formFieldErrors.password && (
+                <p className="text-red-500 text-xs">
+                  {formFieldErrors.password}
+                </p>
+              )}
+            </div>
 
             <div className="space-y-2">
               <Label id="roleLabel">Rôle</Label>
               <Select
                 name="role"
-                defaultValue={currentUtilisateur?.role || "ADMIN"}
                 onValueChange={(value) => {
                   setShowAdditionalFields(true);
                   setRole(value);
@@ -1106,7 +891,7 @@ const Users = () => {
             </div>
 
             {/* Champs additionnels basés sur le rôle */}
-            {renderAdditionalFields(currentUtilisateur?.role || role)}
+            {renderAdditionalFields(role)}
 
             <DialogFooter>
               <Button
@@ -1122,8 +907,6 @@ const Users = () => {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Traitement...
                   </>
-                ) : currentUtilisateur ? (
-                  "Modifier"
                 ) : (
                   "Ajouter"
                 )}
@@ -1132,59 +915,6 @@ const Users = () => {
           </form>
         </DialogContent>
       </Dialog>
-
-      {/* Dialogue de confirmation de suppression */}
-      <AlertDialog
-        open={isDeleteDialogOpen}
-        onOpenChange={setIsDeleteDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmation de suppression</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer cet utilisateur ? Cette action
-              ne peut pas être annulée.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmDelete}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Supprimer
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Dialogue de confirmation de réinitialisation du mot de passe */}
-      <AlertDialog
-        open={isResetPasswordDialogOpen}
-        onOpenChange={setIsResetPasswordDialogOpen}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>
-              Réinitialisation du mot de passe
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir réinitialiser le mot de passe de cet
-              utilisateur ? Un nouveau mot de passe temporaire sera généré et
-              envoyé à l'adresse email de l'utilisateur.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Annuler</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={confirmResetPassword}
-              className="bg-amber-500 hover:bg-amber-600"
-            >
-              Réinitialiser
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
