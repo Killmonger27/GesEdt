@@ -1,7 +1,6 @@
 import { SidebarTrigger } from "./ui/sidebar";
 import { Bell, User, Menu, ChevronDown } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { ModeToggle } from "./mode-toggle";
 import { Button } from "./ui/button";
 import { useNavigate } from "react-router";
 import { useAppDispatch, useAppSelector } from "../hooks/redux";
@@ -52,8 +51,6 @@ const Navbar = () => {
             <Menu size={20} aria-label="Toggle sidebar" />
           </SidebarTrigger>
         </div>
-
-        <ModeToggle />
       </div>
 
       <div className="flex items-center gap-3">

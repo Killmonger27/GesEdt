@@ -46,11 +46,6 @@ export function AppSidebar() {
       icon: Album,
     },
     {
-      title: "Indisponibilités",
-      url: "/indisponibilites",
-      icon: Album,
-    },
-    {
       title: "Utilisateurs",
       url: "/users",
       icon: Users,

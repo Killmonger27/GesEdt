@@ -12,7 +12,6 @@ import NotFound from "./pages/NotFound";
 import ProtectedRoute from "./components/protectedRoute";
 import { ThemeProvider } from "./components/theme-provider";
 import Edt from "./pages/Edt";
-import Indisponibilites from "./pages/Indisponibilites";
 import EditEdt from "./pages/edit";
 
 export default function App() {
@@ -86,15 +85,6 @@ export default function App() {
               element={
                 <ProtectedRoute>
                   <EditEdt />
-                </ProtectedRoute>
-              }
-            />
-
-            <Route
-              path="/indisponibilites"
-              element={
-                <ProtectedRoute>
-                  <Indisponibilites />
                 </ProtectedRoute>
               }
             />
